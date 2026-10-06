@@ -1,0 +1,74 @@
+# ==========================================
+# 1. Dependencias (Node.js / npm / yarn)
+# ==========================================
+node_modules/
+backend_tienda_anime/node_modules/
+frontend_tienda_anime/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# 2. Compilaciones y Salidas (Build Outputs)
+# ==========================================
+# NestJS Backend
+dist/
+backend_tienda_anime/dist/
+*.tsbuildinfo
+
+# Vue.js Frontend
+build/
+frontend_tienda_anime/dist/
+.vite/
+frontend_tienda_anime/.vite/
+
+# ==========================================
+# 3. Variables de Entorno y Secretos
+# ==========================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+backend_tienda_anime/.env
+frontend_tienda_anime/.env
+
+# ==========================================
+# 4. Archivos de Sistema Operativo y Editor
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# IDEs y Editores de Código
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==========================================
+# 5. Logs y Archivos Temporales
+# ==========================================
+logs/
+*.log
+*.tmp
+*.temp
+
+# ==========================================
+# 6. Cobertura de Pruebas (Testing)
+# ==========================================
+coverage/
+backend_tienda_anime/coverage/
+frontend_tienda_anime/coverage/
+.nyc_output/
