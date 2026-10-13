@@ -5,6 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { CategoriasModule } from './categorias/categorias.module';
 import { ProductosModule } from './productos/productos.module';
+import { ClientesModule } from './clientes/clientes.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { VentasModule } from './ventas/ventas.module';
+import { DetalleVentasModule } from './detalle_ventas/detalle_ventas.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { ProductosModule } from './productos/productos.module';
     }),
     CategoriasModule,
     ProductosModule,
+    ClientesModule,
+    UsuariosModule,
+    VentasModule,
+    DetalleVentasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
