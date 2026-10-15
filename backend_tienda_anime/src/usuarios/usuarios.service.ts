@@ -1,26 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Usuario } from './entities/usuario.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsuariosService {
-  create(createUsuarioDto: CreateUsuarioDto) {
-    return 'This action adds a new usuario';
+  constructor(
+    @InjectRepository(Usuario)
+    private usuariosRepository: Repository<Usuario>,
+  ) {}
+
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    // Validar si ya existe un usuario con el mismo nombre de usuario
+    let usuario = await this.usuariosRepository.findOneBy({
+      usuario: createUsuarioDto.usuario,
+    });
+    if (usuario) {
+      throw new ConflictException('El nombre de usuario ya está en uso');
+    }
+
+    usuario = this.usuariosRepository.create(createUsuarioDto);
+    return this.usuariosRepository.save(usuario);
   }
 
-  findAll() {
-    return `This action returns all usuarios`;
+  async findAll(): Promise<Usuario[]> {
+    return this.usuariosRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
+  async findOne(id: number): Promise<Usuario> {
+    const usuario = await this.usuariosRepository.findOneBy({ id });
+    if (!usuario) {
+      throw new NotFoundException('El usuario no existe');
+    }
+    return usuario;
   }
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto): Promise<Usuario> {
+    const usuario = await this.findOne(id);
+    Object.assign(usuario, updateUsuarioDto);
+    return this.usuariosRepository.save(usuario);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
+  async remove(id: number): Promise<Usuario> {
+    const usuario = await this.findOne(id);
+    // Nota: Dependiendo de tu lógica de negocio, a veces se prefiere un borrado lógico (estado = false)
+    return this.usuariosRepository.remove(usuario);
   }
 }
