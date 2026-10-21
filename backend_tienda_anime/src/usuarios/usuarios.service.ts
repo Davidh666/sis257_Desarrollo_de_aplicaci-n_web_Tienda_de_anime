@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,5 +47,28 @@ export class UsuariosService {
     const usuario = await this.findOne(id);
     // Nota: Dependiendo de tu lógica de negocio, a veces se prefiere un borrado lógico (estado = false)
     return this.usuariosRepository.remove(usuario);
+
+
+  }
+
+  async login(usuarioStr: string, claveStr: string) {
+    const user = await this.usuariosRepository.findOne({
+      where: { usuario: usuarioStr },
+    });
+
+    if (!user || user.clave !== claveStr) {
+      throw new UnauthorizedException('Usuario o clave incorrectos');
+    }
+
+    return {
+      token: 'jwt-token-akiba-store',
+      user: {
+        id: user.id,
+        usuario: user.usuario,
+        nombre_completo: user.nombre_completo,
+        rol: user.rol, // 'ADMINISTRADOR' o 'VENDEDOR'
+      },
+    };
   }
 }
+

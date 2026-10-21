@@ -1,24 +1,20 @@
-<script setup lang="ts">
-import Sidebar from '@/components/Sidebar.vue'
-import Navbar from '@/components/Navbar.vue'
-</script>
-
 <template>
-  <div class="app-container">
-    <!-- 1. Barra Lateral fija en toda la app -->
+  <!-- Si estamos en la ruta /login, muestra solo la vista sin el panel de administración -->
+  <router-view v-if="$route.path === '/login'" />
+
+  <!-- Si estamos en cualquier otra ruta, muestra el panel completo con Sidebar y Navbar -->
+  <div v-else class="d-flex" style="min-height: 100vh;">
     <Sidebar />
-
-    <!-- 2. Contenedor Principal -->
-    <div class="main-wrapper">
-      <!-- 3. Navbar Superior fijo en toda la app -->
+    <div class="flex-grow-1 d-flex flex-column">
       <Navbar />
-
-      <!-- 4. Aquí se renderizarán de forma dinámica las vistas (Home, Tablas, Formularios, etc.) -->
-      <RouterView />
+      <div class="flex-grow-1 bg-light">
+        <router-view />
+      </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-/* Puedes dejar este espacio vacío o agregar estilos globales si lo requieres */
-</style>
+<script setup lang="ts">
+import Sidebar from '@/components/Sidebar.vue'
+import Navbar from '@/components/Navbar.vue' // O la ruta donde tengas tu barra superior
+</script>
