@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 export class CreateUsuarioDto {
@@ -15,7 +16,8 @@ export class CreateUsuarioDto {
   @IsString({ message: 'El nombre completo debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El nombre completo es obligatorio' })
   @MaxLength(100, { message: 'El nombre completo no puede tener más de 100 caracteres' })
-  nombre_completo: string;
+  @Expose({ name: 'nombre_completo' })
+  nombreCompleto: string;
 
   @IsString({ message: 'El rol debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El rol es obligatorio' })

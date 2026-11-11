@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Producto } from "../../productos/entities/producto.entity";
 import { Venta } from "../../ventas/entities/venta.entity";
@@ -7,17 +8,20 @@ export class DetalleVenta {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
+  @Expose({ name: 'venta_id' })
   @Column({ type: 'int', name: 'venta_id', nullable: false })
-  venta_id: number;
+  ventaId: number;
 
+  @Expose({ name: 'producto_id' })
   @Column({ type: 'int', name: 'producto_id', nullable: false })
-  producto_id: number;
+  productoId: number;
 
   @Column({ type: 'int', nullable: false })
   cantidad: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, name: 'precio_unitario' })
-  precio_unitario: number;
+  @Expose({ name: 'precio_unitario' })
+  precioUnitario: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
   subtotal: number;

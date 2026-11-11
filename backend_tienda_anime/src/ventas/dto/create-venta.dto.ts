@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from "class-validator";
 
 export class CreateVentaDto {
@@ -13,11 +14,13 @@ export class CreateVentaDto {
 
   @IsNumber({}, { message: 'El ID del cliente debe ser un número' })
   @IsNotEmpty({ message: 'El cliente es obligatorio' })
-  cliente_id: number;
+  @Expose({ name: 'cliente_id' })
+  clienteId: number;
 
   @IsNumber({}, { message: 'El ID del usuario debe ser un número' })
   @IsNotEmpty({ message: 'El usuario es obligatorio' })
-  usuario_id: number;
+  @Expose({ name: 'usuario_id' })
+  usuarioId: number;
 
   @IsString({ message: 'El estado debe ser una cadena de texto' })
   @IsOptional()

@@ -65,10 +65,9 @@ export class UsuariosService {
       user: {
         id: user.id,
         usuario: user.usuario,
-        nombre_completo: user.nombre_completo,
+        nombre_completo: user.nombreCompleto,
         rol: user.rol, // 'ADMINISTRADOR' o 'VENDEDOR'
       },
     };
   }
 }
-

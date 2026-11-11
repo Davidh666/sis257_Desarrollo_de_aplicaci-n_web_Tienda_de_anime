@@ -24,7 +24,7 @@ export class ProductosService {
 
     // Validar que la categoría exista
     const categoria = await this.categoriasRepository.findOneBy({
-      id: createProductoDto.categoria_id,
+      id: createProductoDto.categoriaId,
     });
     if (!categoria) throw new NotFoundException('La categoría especificada no existe');
 
@@ -46,9 +46,9 @@ export class ProductosService {
     const producto = await this.findOne(id);
 
     // Si se intenta cambiar la categoría, verificar que exista
-    if (updateProductoDto.categoria_id) {
+    if (updateProductoDto.categoriaId) {
       const categoria = await this.categoriasRepository.findOneBy({
-        id: updateProductoDto.categoria_id,
+        id: updateProductoDto.categoriaId,
       });
       if (!categoria) throw new NotFoundException('La categoría especificada no existe');
     }

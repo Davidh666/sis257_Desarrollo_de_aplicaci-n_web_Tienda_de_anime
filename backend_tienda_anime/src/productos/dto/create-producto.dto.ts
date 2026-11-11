@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from "class-validator";
 
 export class CreateProductoDto {
@@ -19,7 +20,8 @@ export class CreateProductoDto {
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El precio de venta debe ser un número válido.' })
   @IsNotEmpty({ message: 'El precio de venta es obligatorio.' })
   @Min(0, { message: 'El precio de venta no puede ser negativo.' })
-  readonly precio_venta: number;
+  @Expose({ name: 'precio_venta' })
+  readonly precioVenta: number;
 
   @IsInt({ message: 'El stock debe ser un número entero.' })
   @Min(0, { message: 'El stock no puede ser negativo.' })
@@ -29,11 +31,13 @@ export class CreateProductoDto {
   @IsString({ message: 'La URL de la imagen debe ser una cadena de texto.' })
   @IsOptional()
   @MaxLength(255, { message: 'La URL de la imagen no puede tener más de 255 caracteres.' })
-  readonly imagen_url: string;
+  @Expose({ name: 'imagen_url' })
+  readonly imagenUrl: string;
 
   @IsInt({ message: 'El ID de la categoría debe ser un número entero.' })
   @IsNotEmpty({ message: 'El ID de la categoría es obligatorio.' })
-  readonly categoria_id: number;
+  @Expose({ name: 'categoria_id' })
+  readonly categoriaId: number;
 
   @IsBoolean({ message: 'El estado debe ser verdadero o falso.' })
   @IsOptional()

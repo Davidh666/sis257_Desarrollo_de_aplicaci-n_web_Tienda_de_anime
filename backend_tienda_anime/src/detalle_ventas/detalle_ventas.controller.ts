@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors } from '@nestjs/common';
 import { DetalleVentasService } from './detalle_ventas.service';
 import { CreateDetalleVentaDto } from './dto/create-detalle_venta.dto';
 import { UpdateDetalleVentaDto } from './dto/update-detalle_venta.dto';
 
 @Controller('detalle-ventas')
+@UseInterceptors(ClassSerializerInterceptor)
 export class DetalleVentasController {
   constructor(private readonly detalleVentasService: DetalleVentasService) {}
 

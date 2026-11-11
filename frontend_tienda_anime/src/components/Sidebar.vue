@@ -10,7 +10,8 @@
         const userData = localStorage.getItem('user')
         if (userData) {
           const parsed = JSON.parse(userData)
-          userName.value = parsed.nombre_completo || parsed.usuario
+          const { nombre_completo: nombreCompleto, usuario } = parsed
+          userName.value = nombreCompleto || usuario
           userRole.value = parsed.rol
         }
       })

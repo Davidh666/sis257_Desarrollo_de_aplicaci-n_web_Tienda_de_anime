@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Venta } from "../../ventas/entities/venta.entity";
 
@@ -16,7 +17,8 @@ export class Usuario {
   clave: string;
 
   @Column({ type: 'varchar', length: 100, name: 'nombre_completo', nullable: false })
-  nombre_completo: string;
+  @Expose({ name: 'nombre_completo' })
+  nombreCompleto: string;
 
   @Column({ type: 'varchar', length: 20, nullable: false })
   rol: string; // 'ADMINISTRADOR' o 'VENDEDOR'

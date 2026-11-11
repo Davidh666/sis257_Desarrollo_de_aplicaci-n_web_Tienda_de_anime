@@ -1,0 +1,94 @@
+REGISTRO DE REFACTORIZACION CAMELCASE
+Fecha: 2026-11-11
+
+RESUMEN GENERAL
+Se revisaron los archivos de codigo propios del frontend y backend. Se renombraron
+propiedades internas que estaban en snake_case a lowerCamelCase y se actualizaron
+los usos de esas propiedades. Los nombres snake_case que pertenecen a payloads
+publicos, nombres de columnas/relaciones SQL o variables de entorno se conservaron
+mediante alias explicitos, sin cambiar esos contratos externos.
+
+ARCHIVOS MODIFICADOS Y CAMBIOS
+
+1. backend_tienda_anime/src/detalle_ventas/detalle_ventas.controller.ts
+   - Se agrego ClassSerializerInterceptor para conservar los nombres externos
+     serializados de las propiedades refactorizadas de DetalleVenta.
+   - No se renombraron clases ni metodos; DetalleVentasController y los metodos
+     existentes ya cumplen PascalCase/lowerCamelCase.
+
+2. backend_tienda_anime/src/detalle_ventas/dto/create-detalle_venta.dto.ts
+   - venta_id -> ventaId
+   - producto_id -> productoId
+   - precio_unitario -> precioUnitario
+   - Se conservaron las claves del payload con alias Expose.
+
+3. backend_tienda_anime/src/detalle_ventas/entities/detalle_venta.entity.ts
+   - venta_id -> ventaId
+   - producto_id -> productoId
+   - precio_unitario -> precioUnitario
+   - Se conservaron los nombres de columnas y claves serializadas con alias.
+
+4. backend_tienda_anime/src/productos/dto/create-producto.dto.ts
+   - precio_venta -> precioVenta
+   - imagen_url -> imagenUrl
+   - categoria_id -> categoriaId
+   - Se conservaron las claves del payload con alias Expose.
+
+5. backend_tienda_anime/src/productos/entities/producto.entity.ts
+   - precio_venta -> precioVenta
+   - imagen_url -> imagenUrl
+   - categoria_id -> categoriaId
+   - Se conservaron los nombres de columnas SQL y claves serializadas con alias.
+
+6. backend_tienda_anime/src/productos/productos.service.ts
+   - createProductoDto.categoria_id -> createProductoDto.categoriaId
+   - updateProductoDto.categoria_id -> updateProductoDto.categoriaId
+
+7. backend_tienda_anime/src/productos/productos.controller.ts
+   - Se agrego ClassSerializerInterceptor para conservar las claves externas de
+     las entidades serializadas.
+   - No se renombraron clases ni metodos; ya cumplian la nomenclatura requerida.
+
+8. backend_tienda_anime/src/usuarios/dto/create-usuario.dto.ts
+   - nombre_completo -> nombreCompleto
+   - Se conservo la clave del payload con alias Expose.
+
+9. backend_tienda_anime/src/usuarios/entities/usuario.entity.ts
+   - nombre_completo -> nombreCompleto
+   - Se conservaron el nombre de columna SQL y la clave serializada con alias.
+
+10. backend_tienda_anime/src/usuarios/usuarios.service.ts
+    - Lectura interna user.nombre_completo -> user.nombreCompleto.
+    - La respuesta de login continua exponiendo la clave nombre_completo.
+
+11. backend_tienda_anime/src/usuarios/usuarios.controller.ts
+    - Se agrego ClassSerializerInterceptor para mantener las claves externas de
+      las entidades serializadas.
+    - No se renombraron clases ni metodos; ya cumplian la nomenclatura requerida.
+
+12. backend_tienda_anime/src/ventas/dto/create-venta.dto.ts
+    - cliente_id -> clienteId
+    - usuario_id -> usuarioId
+    - Se conservaron las claves del payload con alias Expose.
+
+13. backend_tienda_anime/src/ventas/entities/venta.entity.ts
+    - cliente_id -> clienteId
+    - usuario_id -> usuarioId
+    - Se conservaron los nombres de columnas SQL y claves serializadas con alias.
+
+14. backend_tienda_anime/src/ventas/ventas.controller.ts
+    - Se agrego ClassSerializerInterceptor para mantener las claves externas de
+      las entidades serializadas.
+    - No se renombraron clases ni metodos; ya cumplian la nomenclatura requerida.
+
+15. frontend_tienda_anime/src/components/Sidebar.vue
+    - Se desestructuro nombre_completo como nombreCompleto al leer el usuario
+      almacenado; el nombre externo original se mantiene intacto.
+
+IMPORTACIONES, EXPORTACIONES Y LOGICA
+Se actualizaron las referencias internas a las propiedades renombradas. Se
+comprobaron las importaciones y exportaciones afectadas; no fue necesario cambiar
+ningun nombre de clase exportada ni ruta de importacion porque esos identificadores
+ya cumplian PascalCase y no se movieron archivos. Los identificadores de framework,
+API, SQL, entorno y DOM permanecen intactos. No se modificaron reglas de negocio,
+algoritmos ni decisiones de flujo; los alias mantienen el formato externo existente.

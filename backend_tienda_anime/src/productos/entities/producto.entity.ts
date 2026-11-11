@@ -1,3 +1,4 @@
+import { Expose } from "class-transformer";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Categoria } from "../../categorias/entities/categoria.entity";
 
@@ -17,17 +18,20 @@ export class Producto {
   @Column({ type: 'text', nullable: true })
   descripcion: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
-  precio_venta: number;
+  @Expose({ name: 'precio_venta' })
+  @Column({ name: 'precio_venta', type: 'decimal', precision: 10, scale: 2, nullable: false })
+  precioVenta: number;
 
   @Column({ type: 'int', default: 0, nullable: false })
   stock: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  imagen_url: string;
+  @Expose({ name: 'imagen_url' })
+  @Column({ name: 'imagen_url', type: 'varchar', length: 255, nullable: true })
+  imagenUrl: string;
 
+  @Expose({ name: 'categoria_id' })
   @Column({ name: 'categoria_id', nullable: false })
-  categoria_id: number;
+  categoriaId: number;
 
   @Column({ type: 'boolean', default: true })
   estado: boolean;
