@@ -1,9 +1,15 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsuariosService {
@@ -13,7 +19,6 @@ export class UsuariosService {
   ) {}
 
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
-    // Validar si ya existe un usuario con el mismo nombre de usuario
     let usuario = await this.usuariosRepository.findOneBy({
       usuario: createUsuarioDto.usuario,
     });
@@ -45,29 +50,31 @@ export class UsuariosService {
 
   async remove(id: number): Promise<Usuario> {
     const usuario = await this.findOne(id);
-    // Nota: Dependiendo de tu lógica de negocio, a veces se prefiere un borrado lógico (estado = false)
     return this.usuariosRepository.remove(usuario);
-
-
   }
 
-  async login(usuarioStr: string, claveStr: string) {
-    const user = await this.usuariosRepository.findOne({
+  async validate(usuarioStr: string, claveStr: string): Promise<Usuario> {
+    const usuarioOk = await this.usuariosRepository.findOne({
       where: { usuario: usuarioStr },
+      select: {
+        id: true,
+        usuario: true,
+        clave: true,
+        nombreCompleto: true,
+        rol: true,
+        estado: true,
+      },
     });
 
-    if (!user || user.clave !== claveStr) {
+    if (!usuarioOk || !usuarioOk.estado) {
       throw new UnauthorizedException('Usuario o clave incorrectos');
     }
 
-    return {
-      token: 'jwt-token-akiba-store',
-      user: {
-        id: user.id,
-        usuario: user.usuario,
-        nombre_completo: user.nombreCompleto,
-        rol: user.rol, // 'ADMINISTRADOR' o 'VENDEDOR'
-      },
-    };
+    const isPasswordValid = await bcrypt.compare(claveStr, usuarioOk.clave);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Usuario o clave incorrectos');
+    }
+
+    delete (usuarioOk as any).clave;
+    return usuarioOk;
   }
-}

@@ -9,9 +9,11 @@ import { ClientesModule } from './clientes/clientes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { VentasModule } from './ventas/ventas.module';
 import { DetalleVentasModule } from './detalle_ventas/detalle_ventas.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -30,6 +32,7 @@ import { DetalleVentasModule } from './detalle_ventas/detalle_ventas.module';
     UsuariosModule,
     VentasModule,
     DetalleVentasModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

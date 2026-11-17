@@ -1,9 +1,14 @@
-import { Expose } from "class-transformer";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Venta } from "../../ventas/entities/venta.entity";
-
-
-
+import { Expose } from 'class-transformer';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { Venta } from '../../ventas/entities/venta.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -13,10 +18,15 @@ export class Usuario {
   @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
   usuario: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false, select: false })
   clave: string;
 
-  @Column({ type: 'varchar', length: 100, name: 'nombre_completo', nullable: false })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'nombre_completo',
+    nullable: false,
+  })
   @Expose({ name: 'nombre_completo' })
   nombreCompleto: string;
 
@@ -26,7 +36,15 @@ export class Usuario {
   @Column({ type: 'boolean', default: true })
   estado: boolean;
 
-  // Relación opcional con ventas si ya tienes creada la entidad Venta
   @OneToMany(() => Venta, (venta) => venta.usuario)
   ventas: Venta[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword() {
+    if (this.clave) {
+      const salt = await bcrypt.genSalt(10);
+      this.clave = await bcrypt.hash(this.clave, salt);
+    }
+  }
 }
