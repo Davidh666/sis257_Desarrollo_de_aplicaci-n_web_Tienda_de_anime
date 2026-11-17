@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/plugins/axios'
+import { isAxiosError } from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 const usuario = ref('')
 const clave = ref('')
 const errorMsg = ref('')
 const cargando = ref(false)
+
 const router = useRouter()
+const authStore = useAuthStore()
 
 const handleLogin = async () => {
   errorMsg.value = ''
   cargando.value = true
-  
+
   try {
-    const response = await api.post('/usuarios/login', {
-      usuario: usuario.value,
-      clave: clave.value
-    })
+    await authStore.login(usuario.value, clave.value)
 
-    const { token, user } = response.data
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(user))
-
-    // Redirección por rol
-    if (user.rol === 'ADMINISTRADOR') {
+    // Redirección por rol usando el usuario guardado en Pinia
+    if (authStore.user?.rol === 'ADMINISTRADOR') {
       router.push('/')
     } else {
       router.push('/sales')
     }
-  } catch (error: any) {
-    errorMsg.value = error.response?.data?.message || 'Usuario o clave incorrectos'
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      errorMsg.value = error.response?.data?.message || 'Usuario o clave incorrectos'
+    } else {
+      errorMsg.value = 'Error inesperado al iniciar sesión'
+    }
   } finally {
     cargando.value = false
   }
