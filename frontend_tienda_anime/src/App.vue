@@ -17,8 +17,7 @@ import Sidebar from './components/Sidebar.vue' // Ajusta la ruta a tu componente
 
 const route = useRoute()
 
-// Ocultar el Sidebar únicamente en la pantalla de Login
-const mostrarSidebar = computed(() => route.path !== '/login')
+const mostrarSidebar = computed(() => Boolean(route.meta.requiresAuth))
 </script>
 
 <style scoped>

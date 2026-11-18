@@ -1,4 +1,3 @@
-import { Expose } from "class-transformer";
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Cliente } from "../../clientes/entities/cliente.entity";
 import { Usuario } from "../../usuarios/entities/usuario.entity";
@@ -18,11 +17,9 @@ export class Venta {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
   total: number;
 
-  @Expose({ name: 'cliente_id' })
   @Column({ type: 'int', name: 'cliente_id', nullable: false })
   clienteId: number;
 
-  @Expose({ name: 'usuario_id' })
   @Column({ type: 'int', name: 'usuario_id', nullable: false })
   usuarioId: number;
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
@@ -10,6 +10,7 @@ const errorMsg = ref('')
 const cargando = ref(false)
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const handleLogin = async () => {
@@ -22,8 +23,10 @@ const handleLogin = async () => {
     // Redirección por rol usando el usuario guardado en Pinia
     if (authStore.user?.rol === 'ADMINISTRADOR') {
       router.push('/')
-    } else {
+    } else if (authStore.user?.rol === 'VENDEDOR') {
       router.push('/sales')
+    } else {
+      router.push('/client')
     }
   } catch (error: unknown) {
     if (isAxiosError(error)) {
@@ -51,6 +54,14 @@ const handleLogin = async () => {
 
       <!-- Formulario -->
       <form @submit.prevent="handleLogin" autocomplete="off">
+        <div
+          v-if="route.query.registered === '1'"
+          class="alert alert-success border-0 p-2 fs-7 text-center rounded-3 mb-3"
+          role="status"
+        >
+          Cuenta creada. Ya puedes iniciar sesión.
+        </div>
+
         <div class="mb-3">
           <label class="form-label text-secondary fw-semibold fs-7 mb-1">Usuario</label>
           <div class="input-group">
@@ -92,6 +103,11 @@ const handleLogin = async () => {
           <span v-else class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         </button>
       </form>
+
+      <p class="text-center mt-3 mb-0">
+        ¿Aún no tienes cuenta?
+        <router-link to="/register" class="link-success">Regístrate</router-link>
+      </p>
 
       <!-- Footer decorativo -->
       <div class="text-center mt-4 pt-2 border-top">

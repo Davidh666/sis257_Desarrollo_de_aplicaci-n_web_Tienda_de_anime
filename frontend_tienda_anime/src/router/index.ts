@@ -1,7 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 import AdminDashboardView from '@/views/AdminDashboardView.vue'
 import ClientSalesView from '@/views/ClientSalesView.vue'
+import ClientHomeView from '@/views/ClientHomeView.vue'
+
+function getRoleHome(rol?: string) {
+  if (rol === 'VENDEDOR') return { name: 'client-sales' }
+  if (rol === 'CLIENTE') return { name: 'client-home' }
+  return { name: 'admin-dashboard' }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,6 +20,11 @@ const router = createRouter({
       component: LoginView
     },
     {
+      path: '/register',
+      name: 'register',
+      component: RegisterView
+    },
+    {
       path: '/',
       name: 'admin-dashboard',
       component: AdminDashboardView,
@@ -20,36 +33,63 @@ const router = createRouter({
     {
       path: '/tables',
       name: 'admin-products',
-      component: () => import('@/views/TablesView.vue'), // CRUD de Productos (Admin)
+      component: () => import('@/views/TablesView.vue'),
+      meta: { requiresAuth: true, role: 'ADMINISTRADOR' }
+    },
+    {
+      path: '/forms',
+      name: 'admin-categories',
+      component: () => import('@/views/FormsView.vue'),
       meta: { requiresAuth: true, role: 'ADMINISTRADOR' }
     },
     {
       path: '/sales',
       name: 'client-sales',
-      component: ClientSalesView, // Vista orientada a ventas/cliente
-      meta: { requiresAuth: true } // Accesible para Admin y Vendedor/Cliente
+      component: ClientSalesView,
+      meta: { requiresAuth: true, roles: ['ADMINISTRADOR', 'VENDEDOR'] }
+    },
+    {
+      path: '/client',
+      name: 'client-home',
+      component: ClientHomeView,
+      meta: { requiresAuth: true, role: 'CLIENTE' }
     }
   ]
 })
 
-// Guardia global actualizado para Vue Router moderno
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  let user: { rol?: string } | null = null
 
-  if (to.meta.requiresAuth && !token) {
-    return { name: 'login' }
-  } 
-  
-  if (to.meta.role && user.rol !== to.meta.role) {
-    if (user.rol !== 'ADMINISTRADOR') {
-      return { name: 'sales' }
-    } else {
-      return { name: 'admin-dashboard' }
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+
+  if (to.meta.requiresAuth) {
+    if (
+      !token ||
+      !['ADMINISTRADOR', 'VENDEDOR', 'CLIENTE'].includes(user?.rol ?? '')
+    ) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      return { name: 'login' }
     }
   }
-  
-  // Si no hay restricciones que cumplir, se omite next() o se retorna true
+
+  if (to.meta.role && user?.rol !== to.meta.role) {
+    return getRoleHome(user?.rol)
+  }
+
+  if (
+    Array.isArray(to.meta.roles) &&
+    !to.meta.roles.includes(user?.rol)
+  ) {
+    return getRoleHome(user?.rol)
+  }
+
   return true
 })
 

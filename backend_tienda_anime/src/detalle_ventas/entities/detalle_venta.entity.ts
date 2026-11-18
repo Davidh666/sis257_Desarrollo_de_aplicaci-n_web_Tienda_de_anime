@@ -1,4 +1,3 @@
-import { Expose } from "class-transformer";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Producto } from "../../productos/entities/producto.entity";
 import { Venta } from "../../ventas/entities/venta.entity";
@@ -8,11 +7,9 @@ export class DetalleVenta {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Expose({ name: 'venta_id' })
   @Column({ type: 'int', name: 'venta_id', nullable: false })
   ventaId: number;
 
-  @Expose({ name: 'producto_id' })
   @Column({ type: 'int', name: 'producto_id', nullable: false })
   productoId: number;
 
@@ -20,7 +17,6 @@ export class DetalleVenta {
   cantidad: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, name: 'precio_unitario' })
-  @Expose({ name: 'precio_unitario' })
   precioUnitario: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
@@ -32,5 +28,8 @@ export class DetalleVenta {
     @JoinColumn({ name: 'venta_id' })
     venta: Venta;
 
+    @ManyToOne(() => Producto, { onDelete: 'RESTRICT' })
+    @JoinColumn({ name: 'producto_id' })
+    producto: Producto;
 
 }

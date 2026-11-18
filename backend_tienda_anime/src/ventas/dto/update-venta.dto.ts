@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateVentaDto } from './create-venta.dto';
+import { IsIn, IsOptional } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateVentaDto extends PartialType(CreateVentaDto) {}
+export class UpdateVentaDto {
+  @ApiPropertyOptional({ enum: ['COMPLETADA', 'ANULADA'] })
+  @IsOptional()
+  @IsIn(['COMPLETADA', 'ANULADA'])
+  estado?: 'COMPLETADA' | 'ANULADA';
+}

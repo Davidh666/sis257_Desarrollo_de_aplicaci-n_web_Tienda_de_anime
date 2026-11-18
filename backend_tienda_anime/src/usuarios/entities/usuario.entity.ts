@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Venta } from '../../ventas/entities/venta.entity';
+import type { UserRole } from '../../auth/interfaces/user-role.interface';
+import { isBcryptHash } from '../utils/password.util';
 
 @Entity('usuarios')
 export class Usuario {
@@ -19,6 +21,7 @@ export class Usuario {
   usuario: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false, select: false })
+  @Exclude()
   clave: string;
 
   @Column({
@@ -27,11 +30,10 @@ export class Usuario {
     name: 'nombre_completo',
     nullable: false,
   })
-  @Expose({ name: 'nombre_completo' })
   nombreCompleto: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false })
-  rol: string; // 'ADMINISTRADOR' o 'VENDEDOR'
+  @Column({ type: 'varchar', length: 20, nullable: false, default: 'CLIENTE' })
+  rol: UserRole;
 
   @Column({ type: 'boolean', default: true })
   estado: boolean;
@@ -41,8 +43,8 @@ export class Usuario {
 
   @BeforeInsert()
   @BeforeUpdate()
-  async hashPassword() {
-    if (this.clave) {
+  async hashPassword(): Promise<void> {
+    if (this.clave && !isBcryptHash(this.clave)) {
       const salt = await bcrypt.genSalt(10);
       this.clave = await bcrypt.hash(this.clave, salt);
     }

@@ -1,12 +1,50 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariosService } from './usuarios.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Usuario } from './entities/usuario.entity';
+import { UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
 
 describe('UsuariosService', () => {
   let service: UsuariosService;
+  let queryBuilder: {
+    where: jest.Mock;
+    addSelect: jest.Mock;
+    getOne: jest.Mock;
+  };
+  let usuariosRepository: {
+    createQueryBuilder: jest.Mock;
+    save: jest.Mock;
+    findOneBy: jest.Mock;
+    create: jest.Mock;
+    remove: jest.Mock;
+  };
 
   beforeEach(async () => {
+    queryBuilder = {
+      where: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      getOne: jest.fn(),
+    };
+    usuariosRepository = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      save: jest.fn().mockImplementation(async (usuario: Usuario) => {
+        await usuario.hashPassword();
+        return usuario;
+      }),
+      findOneBy: jest.fn(),
+      create: jest.fn((usuario) => Object.assign(new Usuario(), usuario)),
+      remove: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsuariosService],
+      providers: [
+        UsuariosService,
+        {
+          provide: getRepositoryToken(Usuario),
+          useValue: usuariosRepository,
+        },
+      ],
     }).compile();
 
     service = module.get<UsuariosService>(UsuariosService);
@@ -14,5 +52,96 @@ describe('UsuariosService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('defaults created users to CLIENTE unless a trusted role is supplied', async () => {
+    usuariosRepository.findOneBy.mockResolvedValue(null);
+    const createUsuarioDto = Object.assign(new CreateUsuarioDto(), {
+      usuario: 'cliente01',
+      clave: 'cliente123',
+      nombreCompleto: 'Cliente Uno',
+    });
+
+    await service.create(createUsuarioDto);
+
+    expect(usuariosRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ rol: 'CLIENTE', estado: true }),
+    );
+  });
+
+  it('selects the hidden hash explicitly and validates a bcrypt password', async () => {
+    const usuario = {
+      id: 8,
+      usuario: 'juan',
+      nombreCompleto: 'Juan Anime',
+      rol: 'VENDEDOR',
+      estado: true,
+      clave: await bcrypt.hash('juan1234', 4),
+    };
+    queryBuilder.getOne.mockResolvedValue(usuario);
+
+    await expect(service.validate('juan', 'juan1234')).resolves.toEqual({
+      id: 8,
+      usuario: 'juan',
+      nombreCompleto: 'Juan Anime',
+      rol: 'VENDEDOR',
+      estado: true,
+    });
+    expect(usuariosRepository.createQueryBuilder).toHaveBeenCalledWith(
+      'usuario',
+    );
+    expect(queryBuilder.addSelect).toHaveBeenCalledWith('usuario.clave');
+    expect(usuariosRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('upgrades a matching legacy plain password to bcrypt during login', async () => {
+    const usuario = Object.assign(new Usuario(), {
+      id: 1,
+      usuario: 'admin',
+      nombreCompleto: 'Administrador',
+      rol: 'ADMINISTRADOR',
+      estado: true,
+      clave: '123456',
+    });
+    queryBuilder.getOne.mockResolvedValue(usuario);
+
+    await expect(service.validate('admin', '123456')).resolves.toEqual({
+      id: 1,
+      usuario: 'admin',
+      nombreCompleto: 'Administrador',
+      rol: 'ADMINISTRADOR',
+      estado: true,
+    });
+    expect(usuariosRepository.save).toHaveBeenCalledWith(usuario);
+    expect(await bcrypt.compare('123456', usuario.clave)).toBe(true);
+  });
+
+  it('rejects invalid credentials', async () => {
+    queryBuilder.getOne.mockResolvedValue({
+      id: 8,
+      usuario: 'juan',
+      nombreCompleto: 'Juan Anime',
+      rol: 'VENDEDOR',
+      estado: true,
+      clave: await bcrypt.hash('juan1234', 4),
+    });
+
+    await expect(service.validate('juan', 'incorrecta')).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('rejects safely when the selected password column is unexpectedly missing', async () => {
+    queryBuilder.getOne.mockResolvedValue({
+      id: 8,
+      usuario: 'juan',
+      nombreCompleto: 'Juan Anime',
+      rol: 'VENDEDOR',
+      estado: true,
+    });
+
+    await expect(service.validate('juan', 'juan1234')).rejects.toThrow(
+      UnauthorizedException,
+    );
   });
 });

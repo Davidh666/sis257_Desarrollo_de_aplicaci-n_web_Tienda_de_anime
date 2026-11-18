@@ -1,0 +1,178 @@
+Akiba Store - Registro de cambios
+================================
+
+Objetivo
+--------
+Adaptar la interfaz y la API para los roles ADMINISTRADOR y VENDEDOR definidos
+por la aplicación, manteniendo autenticación JWT y usando nombres camelCase en
+los contratos TypeScript/Vue.
+
+Autenticación y autorización
+---------------------------
+- El login devuelve id, usuario, nombreCompleto, rol, estado y accessToken.
+  La contraseña nunca forma parte de esa respuesta.
+- JwtAuthGuard y RolesGuard se aplican globalmente. Las rutas públicas se
+  declaran expresamente con @Public().
+- Se añadieron @Roles y RolesGuard, que responden con 403 cuando el usuario
+  autenticado no tiene el rol requerido.
+- Los tokens se validan contra usuarios activos y roles admitidos.
+- JWT_TOKEN es obligatorio y debe tener al menos 32 caracteres.
+  JWT_TOKEN_EXPIRATION es obligatorio y acepta duraciones positivas como
+  60s, 15m, 1h o 7d. Se añadieron valores de ejemplo a
+  backend_tienda_anime/.env.example; deben configurarse valores reales en el
+  entorno local/de despliegue.
+- Se mantiene clave con select:false, @Exclude() y hooks bcrypt
+  @BeforeInsert/@BeforeUpdate. La consulta de autenticación selecciona clave
+  únicamente para comparar el hash y devuelve un perfil sin ese campo.
+
+Permisos implementados
+----------------------
+- ADMINISTRADOR: dashboard y operaciones administrativas; puede administrar
+  productos, categorías, usuarios, clientes, ventas y detalles.
+- VENDEDOR: consulta productos/categorías/clientes, registra clientes y crea
+  ventas. Solo puede listar y consultar sus propias ventas. No puede modificar
+  productos, categorías, clientes existentes, usuarios, ventas ni detalles.
+- Las restricciones se hacen en el backend; los guards del router y menús
+  condicionales del frontend son una segunda capa de navegación, no el control
+  de seguridad principal.
+
+Ventas e inventario
+-------------------
+- El vendedor asociado a una venta se obtiene del usuario validado por JWT;
+  no se acepta usuarioId desde el cliente.
+- POST /ventas recibe clienteId e items (productoId y cantidad). El servidor
+  comprueba cliente/productos activos, bloquea y descuenta stock en una
+  transacción, toma el precio desde la base de datos, calcula subtotales/total,
+  genera el correlativo y crea los detalles de venta.
+- Las lecturas de ventas de vendedor se filtran por usuarioId. Consultar una
+  venta ajena devuelve 404. Actualización/anulación y eliminación quedan
+  reservadas al administrador.
+- Se añadieron las relaciones de detalle con producto para incluir datos de
+  catálogo en las respuestas de ventas.
+- Se alineó el nombre de la entidad Cliente con la tabla PostgreSQL `clientes`.
+
+Frontend
+--------
+- Pinia valida y restaura la sesión, mantiene el rol tipado y limpia datos de
+  sesión corruptos. El login consume accessToken en camelCase.
+- El router incluye la ruta /forms, protege vistas privadas y redirige por rol.
+- El Sidebar presenta navegación, nombreCompleto y acciones según el rol.
+- AdminDashboardView muestra bienvenida y métricas consultadas al backend.
+- ClientSalesView carga catálogo, clientes e historial, permite registrar un
+  cliente, crear un carrito y emitir una venta; el backend recalcula precios
+  y total.
+- TablesView y FormsView implementan administración de productos y categorías,
+  con edición y activación/desactivación en lugar de borrado físico.
+- Los alias snake_case de transporte se retiraron de DTOs/serialización donde
+  se exponían; se mantienen únicamente nombres de columnas DB en mapeos
+  TypeORM, por ejemplo @Column({ name: 'nombre_completo' }).
+- El interceptor Axios existente conserva Authorization: Bearer y limpia la
+  sesión al recibir 401 (excepto errores de credenciales del endpoint login).
+
+Archivos principales
+--------------------
+- backend_tienda_anime/src/auth/: guards JWT/RBAC, roles y configuración del
+  token.
+- backend_tienda_anime/src/ventas/: DTO, controller y servicio transaccional.
+- backend_tienda_anime/src/{productos,categorias,clientes,usuarios,
+  detalle_ventas}/: restricciones de rol y contratos/relaciones.
+- frontend_tienda_anime/src/stores/auth.ts, router/index.ts y components/:
+  sesión, navegación y datos del usuario.
+- frontend_tienda_anime/src/views/: dashboard, punto de venta y CRUDs.
+
+Validación
+----------
+- Backend: npm run build completado.
+- Frontend: npm run build completado (incluye type-check y Vite).
+- Pruebas focalizadas de auth, RolesGuard y ventas: 4 suites, 10 pruebas
+  aprobadas.
+- Swagger UI respondió HTTP 200 en /api y OpenAPI en /api-json; el documento
+  confirmó rutas /api/v1, esquema Bearer JWT y ausencia de requisito Bearer
+  para el login público. También se verificó la app recién compilada en el
+  puerto temporal 3101 sin detener el proceso que ya ocupaba el 3000.
+- npm run lint del backend completado.
+- git diff --check completado sin errores.
+
+Actualización: configuración de entorno y registro público
+=========================================================
+- ConfigModule carga explícitamente el `.env` del directorio backend, tanto al
+  iniciar desde la raíz del repositorio como desde `backend_tienda_anime`.
+  TypeORM lee las variables DB_* mediante ConfigService y valida DB_PORT al
+  iniciar; AuthModule/JwtStrategy consumen JWT_TOKEN y
+  JWT_TOKEN_EXPIRATION desde la misma configuración. No se sobrescribió ni se
+  documentó aquí el contenido privado de `backend_tienda_anime/.env`.
+- `.env.example` quedó como plantilla con placeholders y los nombres exactos
+  de variables requeridos. Copia la plantilla al `.env` del backend y configura
+  credenciales locales propias; JWT_TOKEN debe tener al menos 32 caracteres y
+  JWT_TOKEN_EXPIRATION acepta duraciones positivas como 60s, 15m, 1h o 7d.
+- POST /usuarios es ahora público y crea siempre una cuenta activa con rol
+  VENDEDOR, sin aceptar el rol desde el cliente. El nuevo DTO de registro solo
+  expone usuario, nombreCompleto y clave; esta última se guarda con bcrypt y
+  no se devuelve. La creación administrativa se mantiene protegida en
+  POST /usuarios/administradores y fuerza rol ADMINISTRADOR.
+- Swagger distingue el registro público de las operaciones protegidas:
+  POST /usuarios no requiere Bearer; los endpoints administrativos conservan
+  el esquema access-token y los guards globales JWT/RBAC.
+- Se añadió /register al frontend con formulario, enlace desde Login y aviso
+  de éxito. Las cuentas nuevas acceden al sistema como VENDEDOR; el router y
+  los menús mantienen la separación de vistas por rol. La barra lateral solo
+  se muestra en rutas protegidas.
+
+Documentación interactiva Swagger
+==================================
+- @nestjs/swagger ya estaba declarado como dependencia del backend; se reutilizó
+  sin cambiar package.json ni instalar una segunda versión.
+- src/main.ts genera el documento OpenAPI y monta Swagger UI en la ruta exacta
+  /api. Los endpoints de negocio conservan su prefijo/versionado /api/v1.
+- El esquema Bearer usa el nombre access-token y el formato JWT. Los
+  controladores protegidos declaran @ApiBearerAuth('access-token') y los
+  controladores/DTOs principales documentan operaciones, respuestas, campos y
+  ejemplos. El DTO de respuesta de login solo contiene el perfil y accessToken;
+  no documenta ni devuelve clave.
+- Para probar: abrir http://localhost:3000/api, ejecutar POST
+  /api/v1/auth/login con usuario y clave, copiar accessToken de la respuesta,
+  pulsar Authorize e introducir el token sin escribir el prefijo `Bearer`
+  (Swagger lo agrega). Luego ejecutar una operación protegida. Los endpoints
+  públicos de login y estado siguen sin exigir token.
+- Swagger solo describe/ejecuta las rutas existentes: no sustituye ni desactiva
+  JwtAuthGuard, RolesGuard, @Public(), los permisos por rol ni la protección
+  bcrypt/select:false. No se leyó ni modificó backend_tienda_anime/.env.
+
+Actualización: corrección de contraseñas y login
+===============================================
+- Usuario.clave conserva select:false y @Exclude(). Los hooks
+  @BeforeInsert/@BeforeUpdate ahora hashean únicamente contraseñas en texto
+  plano; reconocen hashes bcrypt existentes ($2a$, $2b$ y $2y$) para evitar
+  que una actualización vuelva a hashear un valor ya protegido.
+- El login consulta con QueryBuilder y `.addSelect('usuario.clave')`, necesario
+  porque la columna se excluye por defecto. Las contraseñas bcrypt se comparan
+  con `bcrypt.compare(claveIngresada, hash)` y la clave no aparece en el perfil
+  que devuelve el servicio.
+- Para compatibilidad con registros antiguos que guardaron texto plano, un
+  acceso correcto se compara en tiempo constante y el hash se actualiza en la
+  misma entidad. El hook de TypeORM convierte inmediatamente ese valor a
+  bcrypt; los siguientes inicios usan `bcrypt.compare`. Las credenciales
+  incorrectas siguen respondiendo 401.
+- El registro público `POST /usuarios` continúa creando vendedores mediante
+  `repository.save`, por lo que ejecuta los hooks y almacena la contraseña
+  hasheada. No se añadió un seeder con contraseñas administrativas conocidas;
+  cualquier administrador debe existir previamente o ser creado por la ruta
+  administrativa protegida.
+- Se añadieron pruebas para el hash idempotente, selección explícita de clave,
+  login con bcrypt, migración de un registro plano heredado y rechazo de clave
+  incorrecta.
+
+Actualización: rol predeterminado de clientes
+=============================================
+- El registro público `POST /usuarios` y el default de creación ahora asignan
+  `CLIENTE`. La propiedad rol del DTO valida `CLIENTE`, `VENDEDOR` o
+  `ADMINISTRADOR` y usa CLIENTE cuando se omite; la columna TypeORM también
+  declara `default: 'CLIENTE'`.
+- El servicio fija CLIENTE para el registro público; la ruta administrativa
+  conserva la asignación explícita de ADMINISTRADOR. La autenticación JWT y el
+  DTO de login reconocen CLIENTE, sin concederle permisos de administrador o
+  vendedor.
+- Se adaptó el frontend para aceptar sesiones CLIENTE, dirigirlas a una vista
+  de cuenta propia y bloquearles las rutas de ventas y administración. El
+  formulario público ahora identifica claramente el registro como cuenta de
+  cliente.
