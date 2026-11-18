@@ -9,7 +9,7 @@ interface Producto {
   estado: boolean
 }
 
-interface Cliente {
+interface ClientePerfil {
   id: number
   estado: boolean
 }
@@ -23,7 +23,7 @@ interface Venta {
 
 const authStore = useAuthStore()
 const productos = ref<Producto[]>([])
-const clientes = ref<Cliente[]>([])
+const clientes = ref<ClientePerfil[]>([])
 const ventas = ref<Venta[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -43,7 +43,7 @@ onMounted(async () => {
   try {
     const [productResponse, clientResponse, saleResponse] = await Promise.all([
       api.get<Producto[]>('/productos'),
-      api.get<Cliente[]>('/clientes'),
+      api.get<ClientePerfil[]>('/usuarios/clientes'),
       api.get<Venta[]>('/ventas'),
     ])
     productos.value = productResponse.data
@@ -117,6 +117,9 @@ onMounted(async () => {
         </router-link>
         <router-link to="/sales" class="btn btn-success">
           <i class="bi bi-cart-check me-2"></i>Ir al punto de venta
+        </router-link>
+        <router-link to="/admin-sales" class="btn btn-outline-primary">
+          <i class="bi bi-clipboard-check me-2"></i>Revisar pedidos
         </router-link>
       </div>
     </section>

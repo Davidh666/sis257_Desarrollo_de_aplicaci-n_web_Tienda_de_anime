@@ -176,3 +176,72 @@ Actualización: rol predeterminado de clientes
   de cuenta propia y bloquearles las rutas de ventas y administración. El
   formulario público ahora identifica claramente el registro como cuenta de
   cliente.
+
+Actualización: ciclo de aprobación de pedidos
+=============================================
+- Las ventas de caja creadas por ADMINISTRADOR/VENDEDOR conservan el estado
+  COMPLETADA. Los pedidos virtuales creados por CLIENTE se guardan como
+  PENDIENTE y se vinculan directamente a `clienteUsuarioId`; no requieren que
+  exista previamente un registro comercial en la tabla clientes.
+- `POST /ventas/pedidos` valida productos y cantidades, calcula precios en el
+  servidor y reserva stock dentro de una transacción. `PATCH /ventas/:id/estado`
+  solo permite aprobar o rechazar pedidos pendientes y está restringido a
+  ADMINISTRADOR/VENDEDOR. Al rechazar se libera el stock reservado; aprobar
+  conserva la reserva. No se puede resolver dos veces un pedido.
+- `GET /ventas` y `GET /ventas/:id` devuelven el historial de la cuenta CLIENTE
+  autenticada filtrando por `clienteUsuarioId`; ADMINISTRADOR consulta todas
+  las ventas y VENDEDOR solamente las propias. El alta/eliminación o el PATCH
+  legado no pueden omitir la liberación de inventario de un pedido pendiente.
+- Se añadió el panel administrativo `/admin-sales` para revisar y aprobar o
+  rechazar pedidos, y `/purchases` para que CLIENTE haga pedidos y consulte el
+  historial con badges: amarillo pendiente, verde aprobado y rojo rechazado.
+  La consulta de productos es de solo lectura para CLIENTE.
+- Se mantuvieron nullable los vínculos de vendedor y cliente comercial en
+  ventas únicamente para pedidos de cuentas CLIENTE; las ventas de caja
+  conservan sus asociaciones actuales. El esquema se actualiza mediante la
+  sincronización TypeORM configurada en la aplicación.
+- Validación de esta entrega: build y lint del backend, build del frontend y
+  8 pruebas focalizadas del controller/servicio de ventas completados. La
+  suite completa todavía reporta 8 suites fallidas (26 pruebas pasan) en tests
+  heredados de módulos de categorías, clientes, productos y detalle de ventas
+  que no configuran sus repositorios dependientes en TestingModule.
+
+Actualización: unificación de clientes y usuarios
+================================================
+- Se eliminó la entidad `Cliente`, el módulo/controlador/servicio y sus DTOs y
+  pruebas dedicadas. `AppModule` ya no registra `ClientesModule`; los perfiles
+  de cliente se administran como filas de `usuarios` con rol `CLIENTE`.
+- `Usuario` ahora conserva los datos opcionales nitCi, telefono y email. La
+  columna clave sigue con `select: false`, bcrypt y @Exclude(), pero permite
+  NULL para perfiles comerciales sin credenciales. Un perfil con clave nula no
+  puede iniciar sesión; el login devuelve 401. El administrador puede asignar
+  una nueva clave mediante la ruta protegida de actualización de usuarios, que
+  pasa por los hooks bcrypt.
+- Se añadió la migración PostgreSQL
+  `src/migrations/1760000000000-ConsolidateClientesIntoUsuarios.ts`, habilitada
+  en TypeORM al iniciar la aplicación. Migra cada fila de clientes a un usuario
+  CLIENTE, conserva NIT/CI, nombre, teléfono, correo y estado, cambia las FKs
+  de ventas a usuarios, consolida el vínculo anterior `cliente_usuario_id` y
+  elimina la tabla clientes después de reescribir las referencias. No inventa
+  contraseñas para los registros heredados.
+- Para una venta de caja, ADMINISTRADOR/VENDEDOR consultan y crean perfiles en
+  `GET/POST /usuarios/clientes`; el POST requiere Bearer y crea un perfil
+  CLIENTE sin credenciales. El registro público `POST /usuarios` sigue
+  solicitando contraseña, que se almacena con bcrypt, y acepta datos de
+  contacto opcionales. Tanto ventas POS como pedidos online se vinculan por
+  `ventas.cliente_id` a `usuarios.id`; `ventas.usuario_id` continúa guardando al
+  vendedor cuando corresponde. El historial del cliente filtra por su mismo
+  `cliente_id`.
+- Dashboard y punto de venta consumen `/usuarios/clientes`; los listados no
+  incluyen clave. Las vistas de ventas leen ahora el perfil mediante la
+  relación `cliente` unificada.
+- `database.sql` quedó alineado con PostgreSQL y ya no declara la tabla
+  `clientes`; la FK de ventas referencia `usuarios`.
+- La migración no es reversible automáticamente. Antes de desplegarla en una
+  base con datos reales, realiza un respaldo y valida el resultado en un
+  entorno de prueba. En una base nueva sin tablas, la migración no hace backfill
+  y TypeORM crea el esquema consolidado.
+- Validación: `npm run build` en backend y frontend, `npm run lint` en backend,
+  y 21 pruebas focalizadas de migración, usuarios/controlador/ventas pasaron. El login
+  selecciona solo los campos del perfil necesarios y no incluye contacto ni
+  clave.

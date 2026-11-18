@@ -22,7 +22,7 @@ export class CreateVentaItemDto {
 }
 
 export class CreateVentaDto {
-  @ApiProperty({ example: 3, description: 'ID del cliente activo.' })
+  @ApiProperty({ example: 3, description: 'ID del usuario con rol CLIENTE.' })
   @IsInt({ message: 'El ID del cliente debe ser un número entero' })
   @IsPositive()
   @IsNotEmpty({ message: 'El cliente es obligatorio' })

@@ -13,7 +13,9 @@ import {
 import type { Request } from 'express';
 import { VentasService } from './ventas.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
+import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
+import { UpdateVentaEstadoDto } from './dto/update-venta-estado.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { Usuario } from '../usuarios/entities/usuario.entity';
 import {
@@ -49,6 +51,7 @@ export class VentasController {
   }
 
   @Get()
+  @Roles('ADMINISTRADOR', 'VENDEDOR', 'CLIENTE')
   @ApiOperation({
     summary: 'Listar ventas; los vendedores solo ven las propias',
   })
@@ -57,7 +60,26 @@ export class VentasController {
     return this.ventasService.findAll(request.user.id, request.user.rol);
   }
 
+  @Post('pedidos')
+  @Roles('CLIENTE')
+  @ApiOperation({
+    summary: 'Crear un pedido pendiente como cliente autenticado',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Pedido creado y stock reservado.',
+  })
+  @ApiResponse({ status: 400, description: 'Stock insuficiente.' })
+  @ApiResponse({ status: 404, description: 'Producto no disponible.' })
+  createPedido(
+    @Body() createPedidoDto: CreatePedidoDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.ventasService.createPedido(createPedidoDto, request.user.id);
+  }
+
   @Get(':id')
+  @Roles('ADMINISTRADOR', 'VENDEDOR', 'CLIENTE')
   @ApiOperation({
     summary: 'Consultar una venta; los vendedores solo acceden a las propias',
   })
@@ -80,6 +102,27 @@ export class VentasController {
   @ApiResponse({ status: 403, description: 'Rol sin permisos.' })
   update(@Param('id') id: string, @Body() updateVentaDto: UpdateVentaDto) {
     return this.ventasService.update(Number(id), updateVentaDto);
+  }
+
+  @Patch(':id/estado')
+  @Roles('ADMINISTRADOR', 'VENDEDOR')
+  @ApiOperation({
+    summary: 'Aprobar o rechazar un pedido pendiente',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, description: 'Estado del pedido actualizado.' })
+  @ApiResponse({
+    status: 409,
+    description: 'El pedido ya fue resuelto.',
+  })
+  updateEstado(
+    @Param('id') id: string,
+    @Body() updateVentaEstadoDto: UpdateVentaEstadoDto,
+  ) {
+    return this.ventasService.updateEstado(
+      Number(id),
+      updateVentaEstadoDto,
+    );
   }
 
   @Delete(':id')

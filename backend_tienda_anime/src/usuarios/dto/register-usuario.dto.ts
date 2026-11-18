@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
+  IsEmail,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -25,4 +27,22 @@ export class RegisterUsuarioDto {
   @IsNotEmpty()
   @MaxLength(100)
   nombreCompleto: string;
+
+  @ApiProperty({ required: false, example: '1234567890', maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  nitCi?: string;
+
+  @ApiProperty({ required: false, example: '+59170000000', maxLength: 15 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15)
+  telefono?: string;
+
+  @ApiProperty({ required: false, example: 'cliente@example.com', maxLength: 100 })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(100)
+  email?: string;
 }

@@ -20,7 +20,7 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Akiba Store API')
     .setDescription(
-      'API de Akiba Store para autenticación, catálogo, clientes y ventas.',
+      'API de Akiba Store para autenticación, catálogo, usuarios y ventas.',
     )
     .setVersion('1.0')
     .addBearerAuth(

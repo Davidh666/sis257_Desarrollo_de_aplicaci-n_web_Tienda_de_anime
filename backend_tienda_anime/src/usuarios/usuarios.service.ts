@@ -4,7 +4,9 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { CreateClientePerfilDto } from './dto/create-cliente-perfil.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
@@ -31,6 +33,14 @@ export class UsuariosService {
     if (usuario) {
       throw new ConflictException('El nombre de usuario ya está en uso');
     }
+    if (createUsuarioDto.nitCi) {
+      const cliente = await this.usuariosRepository.findOneBy({
+        nitCi: createUsuarioDto.nitCi,
+      });
+      if (cliente) {
+        throw new ConflictException('El NIT/CI ya está registrado');
+      }
+    }
 
     usuario = this.usuariosRepository.create({
       usuario: createUsuarioDto.usuario,
@@ -38,6 +48,49 @@ export class UsuariosService {
       nombreCompleto: createUsuarioDto.nombreCompleto,
       rol: assignedRole,
       estado: createUsuarioDto.estado ?? true,
+      nitCi: createUsuarioDto.nitCi ?? null,
+      telefono: createUsuarioDto.telefono ?? null,
+      email: createUsuarioDto.email ?? null,
+    });
+    return this.usuariosRepository.save(usuario);
+  }
+
+  async findClients(): Promise<Usuario[]> {
+    return this.usuariosRepository.find({
+      where: { rol: 'CLIENTE', estado: true },
+      select: {
+        id: true,
+        usuario: true,
+        nombreCompleto: true,
+        nitCi: true,
+        telefono: true,
+        email: true,
+        rol: true,
+        estado: true,
+      },
+      order: { nombreCompleto: 'ASC' },
+    });
+  }
+
+  async createClientProfile(
+    createClientePerfilDto: CreateClientePerfilDto,
+  ): Promise<Usuario> {
+    const existingClient = await this.usuariosRepository.findOneBy({
+      nitCi: createClientePerfilDto.nitCi,
+    });
+    if (existingClient) {
+      throw new ConflictException('El cliente con este NIT/CI ya existe');
+    }
+
+    const usuario = this.usuariosRepository.create({
+      usuario: `cliente_${randomBytes(12).toString('hex')}`,
+      clave: null,
+      nombreCompleto: createClientePerfilDto.nombreCompleto,
+      nitCi: createClientePerfilDto.nitCi,
+      telefono: createClientePerfilDto.telefono ?? null,
+      email: createClientePerfilDto.email ?? null,
+      rol: 'CLIENTE',
+      estado: true,
     });
     return this.usuariosRepository.save(usuario);
   }
@@ -72,6 +125,13 @@ export class UsuariosService {
     const usuarioOk = await this.usuariosRepository
       .createQueryBuilder('usuario')
       .where('usuario.usuario = :usuario', { usuario: usuarioStr })
+      .select([
+        'usuario.id',
+        'usuario.usuario',
+        'usuario.nombreCompleto',
+        'usuario.rol',
+        'usuario.estado',
+      ])
       .addSelect('usuario.clave')
       .getOne();
 
@@ -84,7 +144,7 @@ export class UsuariosService {
       throw new UnauthorizedException('Usuario o clave incorrectos');
     }
 
-    const { clave: storedPassword, ...safeUser } = usuarioOk;
+    const storedPassword = usuarioOk.clave;
     const isPasswordValid = isBcryptHash(storedPassword)
       ? await bcrypt.compare(claveStr, storedPassword)
       : await this.migrateLegacyPassword(usuarioOk, claveStr, storedPassword);
@@ -93,7 +153,13 @@ export class UsuariosService {
       throw new UnauthorizedException('Usuario o clave incorrectos');
     }
 
-    return safeUser;
+    return {
+      id: usuarioOk.id,
+      usuario: usuarioOk.usuario,
+      nombreCompleto: usuarioOk.nombreCompleto,
+      rol: usuarioOk.rol,
+      estado: usuarioOk.estado,
+    };
   }
 
   private async migrateLegacyPassword(

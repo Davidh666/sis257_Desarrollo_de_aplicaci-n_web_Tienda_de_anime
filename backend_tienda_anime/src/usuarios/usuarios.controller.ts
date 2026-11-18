@@ -13,6 +13,7 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { RegisterUsuarioDto } from './dto/register-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { CreateClientePerfilDto } from './dto/create-cliente-perfil.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/auth-public.decorator';
 import {
@@ -43,6 +44,9 @@ export class UsuariosController {
       nombreCompleto: registerUsuarioDto.nombreCompleto,
       rol: 'CLIENTE',
       estado: true,
+      nitCi: registerUsuarioDto.nitCi,
+      telefono: registerUsuarioDto.telefono,
+      email: registerUsuarioDto.email,
     };
     return this.usuariosService.create(createUsuarioDto, 'CLIENTE');
   }
@@ -60,7 +64,29 @@ export class UsuariosController {
       nombreCompleto: createUsuarioDto.nombreCompleto,
       rol: 'ADMINISTRADOR',
       estado: createUsuarioDto.estado,
+      nitCi: createUsuarioDto.nitCi,
+      telefono: createUsuarioDto.telefono,
+      email: createUsuarioDto.email,
     }, 'ADMINISTRADOR');
+  }
+
+  @Get('clientes')
+  @ApiBearerAuth('access-token')
+  @Roles('ADMINISTRADOR', 'VENDEDOR')
+  @ApiOperation({ summary: 'Listar perfiles de clientes activos' })
+  @ApiResponse({ status: 200, description: 'Lista de clientes sin datos de clave.' })
+  findClients() {
+    return this.usuariosService.findClients();
+  }
+
+  @Post('clientes')
+  @ApiBearerAuth('access-token')
+  @Roles('ADMINISTRADOR', 'VENDEDOR')
+  @ApiOperation({ summary: 'Crear un perfil de cliente para una venta de caja' })
+  @ApiResponse({ status: 201, description: 'Perfil de cliente creado.' })
+  @ApiResponse({ status: 409, description: 'El NIT/CI ya está registrado.' })
+  createClientProfile(@Body() createClientePerfilDto: CreateClientePerfilDto) {
+    return this.usuariosService.createClientProfile(createClientePerfilDto);
   }
 
   @Get()

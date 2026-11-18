@@ -6,11 +6,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { resolve } from 'node:path';
 import { CategoriasModule } from './categorias/categorias.module';
 import { ProductosModule } from './productos/productos.module';
-import { ClientesModule } from './clientes/clientes.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { VentasModule } from './ventas/ventas.module';
 import { DetalleVentasModule } from './detalle_ventas/detalle_ventas.module';
 import { AuthModule } from './auth/auth.module';
+import { ConsolidateClientesIntoUsuarios1760000000000 } from './migrations/1760000000000-ConsolidateClientesIntoUsuarios';
 
 @Module({
   imports: [
@@ -39,6 +39,8 @@ import { AuthModule } from './auth/auth.module';
           password: configService.getOrThrow<string>('DB_PASSWORD'),
           database: configService.getOrThrow<string>('DB_DATABASE'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          migrations: [ConsolidateClientesIntoUsuarios1760000000000],
+          migrationsRun: true,
           synchronize: true,
           autoLoadEntities: true,
         };
@@ -46,7 +48,6 @@ import { AuthModule } from './auth/auth.module';
     }),
     CategoriasModule,
     ProductosModule,
-    ClientesModule,
     UsuariosModule,
     VentasModule,
     DetalleVentasModule,

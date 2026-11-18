@@ -1,7 +1,21 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Cliente } from "../../clientes/entities/cliente.entity";
-import { Usuario } from "../../usuarios/entities/usuario.entity";
-import { DetalleVenta } from "../../detalle_ventas/entities/detalle_venta.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { DetalleVenta } from '../../detalle_ventas/entities/detalle_venta.entity';
+
+export type VentaEstado =
+  | 'PENDIENTE'
+  | 'APROBADO'
+  | 'RECHAZADO'
+  | 'COMPLETADA'
+  | 'ANULADA';
 
 @Entity('ventas')
 export class Venta {
@@ -17,25 +31,31 @@ export class Venta {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
   total: number;
 
-  @Column({ type: 'int', name: 'cliente_id', nullable: false })
-  clienteId: number;
+  @Column({ type: 'int', name: 'cliente_id', nullable: true })
+  clienteId: number | null;
 
-  @Column({ type: 'int', name: 'usuario_id', nullable: false })
-  usuarioId: number;
+  @Column({ type: 'int', name: 'usuario_id', nullable: true })
+  usuarioId: number | null;
 
-  @Column({ type: 'varchar', length: 20, default: 'COMPLETADA' })
-  estado: string; // 'COMPLETADA' o 'ANULADA'
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estado: VentaEstado;
 
-  // Relación con Clientes (Unidireccional simple)
-  @ManyToOne(() => Cliente, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Usuario, (usuario) => usuario.ventasComoCliente, {
+    onDelete: 'RESTRICT',
+    nullable: true,
+  })
   @JoinColumn({ name: 'cliente_id' })
-  cliente: Cliente;
+  cliente: Usuario | null;
 
-  // Relación con Usuarios
-  @ManyToOne(() => Usuario, (usuario) => usuario.ventas, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Usuario, (usuario) => usuario.ventas, {
+    onDelete: 'RESTRICT',
+    nullable: true,
+  })
   @JoinColumn({ name: 'usuario_id' })
-  usuario: Usuario;
+  usuario: Usuario | null;
 
-  @OneToMany(() => DetalleVenta, (detalleVenta) => detalleVenta.venta, { cascade: true })
-detalles: DetalleVenta[];
+  @OneToMany(() => DetalleVenta, (detalleVenta) => detalleVenta.venta, {
+    cascade: true,
+  })
+  detalles: DetalleVenta[];
 }

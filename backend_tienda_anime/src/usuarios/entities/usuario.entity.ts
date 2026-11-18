@@ -4,6 +4,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -13,6 +14,7 @@ import type { UserRole } from '../../auth/interfaces/user-role.interface';
 import { isBcryptHash } from '../utils/password.util';
 
 @Entity('usuarios')
+@Index('UQ_usuarios_nit_ci', ['nitCi'], { unique: true })
 export class Usuario {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -20,9 +22,9 @@ export class Usuario {
   @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
   usuario: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false, select: false })
+  @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   @Exclude()
-  clave: string;
+  clave: string | null;
 
   @Column({
     type: 'varchar',
@@ -38,8 +40,25 @@ export class Usuario {
   @Column({ type: 'boolean', default: true })
   estado: boolean;
 
+  @Column({
+    type: 'varchar',
+    length: 20,
+    name: 'nit_ci',
+    nullable: true,
+  })
+  nitCi: string | null;
+
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  telefono: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  email: string | null;
+
   @OneToMany(() => Venta, (venta) => venta.usuario)
   ventas: Venta[];
+
+  @OneToMany(() => Venta, (venta) => venta.cliente)
+  ventasComoCliente: Venta[];
 
   @BeforeInsert()
   @BeforeUpdate()

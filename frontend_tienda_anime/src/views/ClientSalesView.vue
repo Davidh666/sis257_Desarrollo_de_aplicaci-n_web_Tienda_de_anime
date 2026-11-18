@@ -15,10 +15,10 @@ interface Producto {
   estado: boolean
 }
 
-interface Cliente {
+interface ClientePerfil {
   id: number
-  razonSocial: string
-  nitCi: string
+  nombreCompleto: string
+  nitCi: string | null
   estado: boolean
 }
 
@@ -28,7 +28,7 @@ interface Venta {
   fecha: string
   total: number | string
   estado: string
-  cliente?: Cliente
+  cliente?: ClientePerfil
 }
 
 interface CartItem {
@@ -38,7 +38,7 @@ interface CartItem {
 
 const authStore = useAuthStore()
 const productos = ref<Producto[]>([])
-const clientes = ref<Cliente[]>([])
+const clientes = ref<ClientePerfil[]>([])
 const ventas = ref<Venta[]>([])
 const carrito = ref<CartItem[]>([])
 const clienteId = ref<number | null>(null)
@@ -79,11 +79,11 @@ async function loadData(): Promise<void> {
   try {
     const [productResponse, clientResponse, saleResponse] = await Promise.all([
       api.get<Producto[]>('/productos'),
-      api.get<Cliente[]>('/clientes'),
+      api.get<ClientePerfil[]>('/usuarios/clientes'),
       api.get<Venta[]>('/ventas'),
     ])
     productos.value = productResponse.data
-    clientes.value = clientResponse.data.filter((cliente) => cliente.estado)
+    clientes.value = clientResponse.data
     ventas.value = saleResponse.data
   } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error)
@@ -125,8 +125,8 @@ async function createClient(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    const response = await api.post<Cliente>('/clientes', {
-      razonSocial: nuevoCliente.razonSocial.trim(),
+    const response = await api.post<ClientePerfil>('/usuarios/clientes', {
+      nombreCompleto: nuevoCliente.razonSocial.trim(),
       nitCi: nuevoCliente.nitCi.trim(),
       telefono: nuevoCliente.telefono.trim() || undefined,
       email: nuevoCliente.email.trim() || undefined,
@@ -260,7 +260,7 @@ onMounted(loadData)
                 <tr v-for="venta in ventas.slice(0, 10)" :key="venta.id">
                   <td>{{ venta.correlativo }}</td>
                   <td>{{ new Date(venta.fecha).toLocaleString() }}</td>
-                  <td>{{ venta.cliente?.razonSocial || '—' }}</td>
+                  <td>{{ venta.cliente?.nombreCompleto || '—' }}</td>
                   <td>{{ venta.estado }}</td>
                   <td class="text-end">Bs. {{ formatCurrency(venta.total) }}</td>
                 </tr>
@@ -282,7 +282,7 @@ onMounted(loadData)
           >
             <option :value="null" disabled>Selecciona un cliente</option>
             <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-              {{ cliente.razonSocial }} — {{ cliente.nitCi }}
+              {{ cliente.nombreCompleto }} — {{ cliente.nitCi || 'Sin NIT/CI' }}
             </option>
           </select>
           <button

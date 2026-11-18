@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -46,4 +47,22 @@ export class CreateUsuarioDto {
   @IsBoolean({ message: 'El estado debe ser un valor booleano' })
   @IsOptional()
   estado?: boolean;
+
+  @ApiPropertyOptional({ example: '1234567890', maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  nitCi?: string;
+
+  @ApiPropertyOptional({ example: '+59170000000', maxLength: 15 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15)
+  telefono?: string;
+
+  @ApiPropertyOptional({ example: 'cliente@example.com', maxLength: 100 })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(100)
+  email?: string;
 }

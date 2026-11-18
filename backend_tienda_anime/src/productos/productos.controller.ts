@@ -15,7 +15,7 @@ import {
 @ApiBearerAuth('access-token')
 @Controller('productos')
 @UseInterceptors(ClassSerializerInterceptor)
-@Roles('ADMINISTRADOR', 'VENDEDOR')
+@Roles('ADMINISTRADOR', 'VENDEDOR', 'CLIENTE')
 export class ProductosController {
   constructor(private readonly productosService: ProductosService) {}
 

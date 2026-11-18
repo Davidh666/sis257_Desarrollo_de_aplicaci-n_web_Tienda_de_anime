@@ -12,6 +12,9 @@ const authStore = useAuthStore()
       <p class="text-muted mb-4">
         Tu cuenta de Akiba Store está lista.
       </p>
+      <router-link to="/purchases" class="btn btn-success align-self-start mb-3">
+        Ver mis compras
+      </router-link>
       <button class="btn btn-outline-danger align-self-start" type="button" @click="authStore.logout">
         Cerrar sesión
       </button>

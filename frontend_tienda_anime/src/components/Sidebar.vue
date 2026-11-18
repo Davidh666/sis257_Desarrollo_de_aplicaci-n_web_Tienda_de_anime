@@ -60,9 +60,23 @@ const homeRoute = computed(() => {
           </li>
 
           <li v-if="authStore.user?.rol === 'ADMINISTRADOR'" class="sidebar-menu-item">
+            <router-link to="/admin-sales" class="sidebar-menu-link">
+              <i class="bi bi-clipboard-check"></i>
+              <span>Pedidos pendientes</span>
+            </router-link>
+          </li>
+
+          <li v-if="authStore.user?.rol === 'ADMINISTRADOR'" class="sidebar-menu-item">
             <router-link to="/sales" class="sidebar-menu-link">
               <i class="bi bi-cart-check-fill"></i>
               <span>Ventas (Módulo)</span>
+            </router-link>
+          </li>
+
+          <li v-if="authStore.user?.rol === 'CLIENTE'" class="sidebar-menu-item">
+            <router-link to="/purchases" class="sidebar-menu-link">
+              <i class="bi bi-bag-check"></i>
+              <span>Mis compras</span>
             </router-link>
           </li>
         </ul>

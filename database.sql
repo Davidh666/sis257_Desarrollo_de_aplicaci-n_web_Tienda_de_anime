@@ -24,38 +24,32 @@ CREATE TABLE productos (
     CONSTRAINT fk_productos_categorias FOREIGN KEY (categoria_id) REFERENCES categorias(id)
 );
 
-CREATE TABLE clientes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    razon_social VARCHAR(100) NOT NULL,
-    nit_ci VARCHAR(20) UNIQUE NOT NULL,
-    telefono VARCHAR(15),
-    email VARCHAR(100),
-    estado BOOLEAN DEFAULT TRUE
-);
-
 CREATE TABLE usuarios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     usuario VARCHAR(50) UNIQUE NOT NULL,
-    clave VARCHAR(255) NOT NULL,
+    clave VARCHAR(255),
     nombre_completo VARCHAR(100) NOT NULL,
-    rol VARCHAR(20) NOT NULL, -- 'ADMINISTRADOR' o 'VENDEDOR'
-    estado BOOLEAN DEFAULT TRUE
+    rol VARCHAR(20) NOT NULL DEFAULT 'CLIENTE',
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    nit_ci VARCHAR(20) UNIQUE,
+    telefono VARCHAR(15),
+    email VARCHAR(100)
 );
 
 CREATE TABLE ventas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     correlativo VARCHAR(20) UNIQUE NOT NULL,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10,2) NOT NULL,
-    cliente_id INT NOT NULL,
-    usuario_id INT NOT NULL,
-    estado VARCHAR(20) DEFAULT 'COMPLETADA', -- 'COMPLETADA' o 'ANULADA'
-    CONSTRAINT fk_venta_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    cliente_id INT,
+    usuario_id INT,
+    estado VARCHAR(20) DEFAULT 'COMPLETADA',
+    CONSTRAINT fk_venta_cliente FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
     CONSTRAINT fk_venta_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
 CREATE TABLE detalle_ventas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     venta_id INT NOT NULL,
     producto_id INT NOT NULL,
     cantidad INT NOT NULL,

@@ -59,4 +59,18 @@ describe('UsuariosController', () => {
       estado: true,
     }, 'CLIENTE');
   });
+
+  it('restricts client profile management to administrators and vendors', () => {
+    for (const methodName of ['findClients', 'createClientProfile']) {
+      const handler = Object.getOwnPropertyDescriptor(
+        UsuariosController.prototype,
+        methodName,
+      )?.value;
+
+      expect(Reflect.getMetadata(ROLES_KEY, handler)).toEqual([
+        'ADMINISTRADOR',
+        'VENDEDOR',
+      ]);
+    }
+  });
 });
