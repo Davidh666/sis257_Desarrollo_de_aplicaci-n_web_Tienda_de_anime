@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariosService } from './usuarios.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Usuario } from './entities/usuario.entity';
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 
@@ -90,8 +93,55 @@ describe('UsuariosService', () => {
         estado: true,
       }),
     );
+    expect(cliente.usuario).toMatch(/^cliente_[a-f0-9]{24}$/);
     expect(cliente.clave).toBeNull();
+    expect(usuariosRepository.findOneBy).toHaveBeenCalledWith({
+      usuario: cliente.usuario,
+    });
     expect(usuariosRepository.save).toHaveBeenCalledWith(cliente);
+  });
+
+  it('generates a username when the submitted username is empty', async () => {
+    usuariosRepository.findOneBy.mockResolvedValue(null);
+
+    const cliente = await service.createClientProfile({
+      nombreCompleto: 'Akira Tanaka',
+      nitCi: '1234567890',
+      usuario: '   ',
+    });
+
+    expect(cliente.usuario).toMatch(/^cliente_[a-f0-9]{24}$/);
+    expect(cliente.clave).toBeNull();
+  });
+
+  it('creates POS client login credentials and hashes the password before saving', async () => {
+    usuariosRepository.findOneBy.mockResolvedValue(null);
+
+    const cliente = await service.createClientProfile({
+      nombreCompleto: 'Akira Tanaka',
+      nitCi: '1234567890',
+      usuario: 'akira.tanaka',
+      clave: 'claveSegura123',
+    });
+
+    expect(cliente.usuario).toBe('akira.tanaka');
+    expect(cliente.clave).not.toBe('claveSegura123');
+    expect(await bcrypt.compare('claveSegura123', cliente.clave!)).toBe(true);
+    expect(usuariosRepository.save).toHaveBeenCalledWith(cliente);
+  });
+
+  it('rejects duplicate usernames when creating POS client credentials', async () => {
+    usuariosRepository.findOneBy.mockResolvedValue({ id: 2 });
+
+    await expect(
+      service.createClientProfile({
+        nombreCompleto: 'Akira Tanaka',
+        nitCi: '1234567890',
+        usuario: 'akira.tanaka',
+        clave: 'claveSegura123',
+      }),
+    ).rejects.toThrow(ConflictException);
+    expect(usuariosRepository.save).not.toHaveBeenCalled();
   });
 
   it('lists only active client profiles without selecting the password', async () => {

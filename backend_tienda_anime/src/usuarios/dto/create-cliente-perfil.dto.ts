@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 
 export class CreateClientePerfilDto {
@@ -31,4 +32,21 @@ export class CreateClientePerfilDto {
   @IsEmail()
   @MaxLength(100)
   email?: string;
+
+  @ApiPropertyOptional({ example: 'akira.tanaka', maxLength: 50 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  usuario?: string;
+
+  @ApiPropertyOptional({
+    example: 'claveSegura123',
+    minLength: 6,
+    maxLength: 255,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(255)
+  clave?: string;
 }

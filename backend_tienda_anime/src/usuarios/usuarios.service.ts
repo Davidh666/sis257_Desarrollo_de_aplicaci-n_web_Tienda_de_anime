@@ -75,6 +75,18 @@ export class UsuariosService {
   async createClientProfile(
     createClientePerfilDto: CreateClientePerfilDto,
   ): Promise<Usuario> {
+    let username = createClientePerfilDto.usuario?.trim();
+    if (username) {
+      const existingUser = await this.usuariosRepository.findOneBy({
+        usuario: username,
+      });
+      if (existingUser) {
+        throw new ConflictException('El nombre de usuario ya está en uso');
+      }
+    } else {
+      username = await this.generateUniqueClientUsername();
+    }
+
     const existingClient = await this.usuariosRepository.findOneBy({
       nitCi: createClientePerfilDto.nitCi,
     });
@@ -83,8 +95,8 @@ export class UsuariosService {
     }
 
     const usuario = this.usuariosRepository.create({
-      usuario: `cliente_${randomBytes(12).toString('hex')}`,
-      clave: null,
+      usuario: username,
+      clave: createClientePerfilDto.clave || null,
       nombreCompleto: createClientePerfilDto.nombreCompleto,
       nitCi: createClientePerfilDto.nitCi,
       telefono: createClientePerfilDto.telefono ?? null,
@@ -93,6 +105,22 @@ export class UsuariosService {
       estado: true,
     });
     return this.usuariosRepository.save(usuario);
+  }
+
+  private async generateUniqueClientUsername(): Promise<string> {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const username = `cliente_${randomBytes(12).toString('hex')}`;
+      const existingUser = await this.usuariosRepository.findOneBy({
+        usuario: username,
+      });
+      if (!existingUser) {
+        return username;
+      }
+    }
+
+    throw new ConflictException(
+      'No se pudo generar un nombre de usuario único para el cliente.',
+    );
   }
 
   async findAll(): Promise<Usuario[]> {

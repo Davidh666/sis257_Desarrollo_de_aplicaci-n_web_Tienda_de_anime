@@ -47,7 +47,14 @@ const isSaving = ref(false)
 const showNewClientForm = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-const nuevoCliente = reactive({ razonSocial: '', nitCi: '', telefono: '', email: '' })
+const nuevoCliente = reactive({
+  razonSocial: '',
+  nitCi: '',
+  telefono: '',
+  email: '',
+  usuario: '',
+  clave: '',
+})
 
 const total = computed(() =>
   carrito.value.reduce(
@@ -124,12 +131,21 @@ function changeQuantity(item: CartItem, change: number): void {
 async function createClient(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
+  const usuario = nuevoCliente.usuario.trim()
+  const clave = nuevoCliente.clave
+  if (clave && clave.length < 6) {
+    errorMessage.value = 'La clave debe tener al menos 6 caracteres.'
+    return
+  }
+
   try {
     const response = await api.post<ClientePerfil>('/usuarios/clientes', {
       nombreCompleto: nuevoCliente.razonSocial.trim(),
       nitCi: nuevoCliente.nitCi.trim(),
       telefono: nuevoCliente.telefono.trim() || undefined,
       email: nuevoCliente.email.trim() || undefined,
+      usuario: usuario || undefined,
+      clave: clave || undefined,
     })
     clientes.value.push(response.data)
     clienteId.value = response.data.id
@@ -138,6 +154,8 @@ async function createClient(): Promise<void> {
       nitCi: '',
       telefono: '',
       email: '',
+      usuario: '',
+      clave: '',
     })
     showNewClientForm.value = false
     successMessage.value = 'Cliente registrado correctamente.'
@@ -294,7 +312,7 @@ onMounted(loadData)
           </button>
 
           <div v-if="showNewClientForm" class="border rounded p-3 mb-3">
-            <label for="customer-name" class="form-label">Razón social</label>
+            <label for="customer-name" class="form-label">Nombre Completo</label>
             <input
               id="customer-name"
               v-model="nuevoCliente.razonSocial"
@@ -321,9 +339,27 @@ onMounted(loadData)
             <input
               id="customer-email"
               v-model="nuevoCliente.email"
-              class="form-control mb-3"
+              class="form-control mb-2"
               type="email"
               maxlength="100"
+            />
+            <label for="customer-username" class="form-label">Usuario (opcional)</label>
+            <input
+              id="customer-username"
+              v-model="nuevoCliente.usuario"
+              class="form-control mb-2"
+              maxlength="50"
+              autocomplete="username"
+            />
+            <label for="customer-password" class="form-label">Clave (opcional)</label>
+            <input
+              id="customer-password"
+              v-model="nuevoCliente.clave"
+              class="form-control mb-3"
+              type="password"
+              minlength="6"
+              maxlength="255"
+              autocomplete="new-password"
             />
             <button class="btn btn-outline-success btn-sm" type="button" @click="createClient">
               Guardar cliente

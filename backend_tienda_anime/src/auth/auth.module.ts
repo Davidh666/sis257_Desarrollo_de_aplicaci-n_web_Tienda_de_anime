@@ -9,6 +9,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { getJwtSecret } from './utils/jwt-secret.util';
 
 const jwtExpirationMultipliers: Record<string, number> = {
   s: 1,
@@ -34,15 +35,6 @@ function parseJwtExpiration(value: string): number {
   return durationInSeconds;
 }
 
-function getJwtSecret(configService: ConfigService): string {
-  const secret = configService.getOrThrow<string>('JWT_TOKEN');
-  if (secret.length < 32) {
-    throw new Error('JWT_TOKEN must contain at least 32 characters');
-  }
-
-  return secret;
-}
-
 @Module({
   imports: [
     ConfigModule,
@@ -55,7 +47,7 @@ function getJwtSecret(configService: ConfigService): string {
         secret: getJwtSecret(configService),
         signOptions: {
           expiresIn: parseJwtExpiration(
-            configService.getOrThrow<string>('JWT_TOKEN_EXPIRATION'),
+            configService.get<string>('JWT_TOKEN_EXPIRATION') ?? '8h',
           ),
         },
       }),

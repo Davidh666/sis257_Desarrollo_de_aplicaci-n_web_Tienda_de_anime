@@ -265,3 +265,28 @@ Actualización: módulo independiente de historial de pedidos
   totales y productos de sus pedidos, con opción para actualizar el historial.
 - La ruta requiere autenticación y rol CLIENTE; el sidebar muestra el enlace
   «Historial de pedidos» debajo de «Mis compras» y destaca la opción activa.
+
+Actualización: duración de sesión JWT
+=====================================
+- Las sesiones JWT duran ocho horas (`JWT_TOKEN_EXPIRATION=8h`) y la
+  configuración usa ese valor como respaldo cuando la variable no está
+  definida.
+- `JWT_SECRET` es el nombre principal para la clave de firma y validación. Se
+  conserva `JWT_TOKEN` como respaldo compatible con configuraciones anteriores;
+  la clave debe tener al menos 32 caracteres y no se incluye un secreto real
+  en el código ni en `.env.example`.
+- El frontend ya persiste el token en localStorage, lo envía como Bearer y
+  limpia la sesión únicamente ante HTTP 401 de la API (exceptuando el login).
+
+Actualización: acceso opcional para clientes del punto de venta
+===============================================================
+- El formulario de registro rápido en ClientSalesView permite ingresar
+  usuario y clave opcionalmente. Si ambos quedan vacíos, se crea el perfil
+  comercial sin acceso; al completar ambos, se envían junto con los datos del
+  cliente. La interfaz rechaza credenciales incompletas y claves menores a
+  seis caracteres.
+- CreateClientePerfilDto acepta usuario y clave opcionales. El servicio
+  genera un usuario único cuando el valor se omite o está vacío y rechaza
+  nombres de usuario proporcionados que estén duplicados. Si no se proporciona
+  clave, se guarda NULL; cuando existe, la entidad Usuario aplica bcrypt antes
+  de guardar. La respuesta permite agregar y seleccionar el cliente creado.
