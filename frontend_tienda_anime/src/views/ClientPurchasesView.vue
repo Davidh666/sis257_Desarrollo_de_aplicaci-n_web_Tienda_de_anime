@@ -3,8 +3,6 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { isAxiosError } from 'axios'
 import api from '@/plugins/axios'
 
-type PedidoEstado = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'COMPLETADA' | 'ANULADA'
-
 interface Producto {
   id: number
   codigo: string
@@ -14,27 +12,12 @@ interface Producto {
   estado: boolean
 }
 
-interface Pedido {
-  id: number
-  correlativo: string
-  fecha: string
-  total: number | string
-  estado: PedidoEstado
-  detalles: Array<{
-    cantidad: number
-    precioUnitario: number | string
-    subtotal: number | string
-    producto?: { nombre: string }
-  }>
-}
-
 interface PedidoItem {
   productoId: number
   cantidad: number
 }
 
 const productos = ref<Producto[]>([])
-const pedidos = ref<Pedido[]>([])
 const cantidades = reactive<Record<number, number>>({})
 const isLoading = ref(false)
 const isSubmitting = ref(false)
@@ -69,16 +52,12 @@ function getErrorMessage(error: unknown): string {
   return 'Ocurrió un error inesperado.'
 }
 
-async function loadData(): Promise<void> {
+async function loadProducts(): Promise<void> {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const [purchaseResponse, productResponse] = await Promise.all([
-      api.get<Pedido[]>('/ventas'),
-      api.get<Producto[]>('/productos'),
-    ])
-    pedidos.value = purchaseResponse.data
-    productos.value = productResponse.data
+    const response = await api.get<Producto[]>('/productos')
+    productos.value = response.data
   } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error)
   } finally {
@@ -96,14 +75,14 @@ async function createPedido(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    const response = await api.post<Pedido>('/ventas/pedidos', {
+    const response = await api.post<{ correlativo: string }>('/ventas/pedidos', {
       items: pedidoItems.value,
     })
     successMessage.value = `Pedido ${response.data.correlativo} creado y pendiente de aprobación.`
     for (const productoId of Object.keys(cantidades)) {
       delete cantidades[Number(productoId)]
     }
-    await loadData()
+    await loadProducts()
   } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error)
   } finally {
@@ -111,29 +90,11 @@ async function createPedido(): Promise<void> {
   }
 }
 
-function statusBadgeClass(estado: PedidoEstado): string {
-  if (estado === 'PENDIENTE') return 'bg-warning text-dark'
-  if (estado === 'APROBADO' || estado === 'COMPLETADA') return 'bg-success'
-  if (estado === 'RECHAZADO' || estado === 'ANULADA') return 'bg-danger'
-  return 'bg-secondary'
-}
-
-function statusLabel(estado: PedidoEstado): string {
-  const labels: Record<PedidoEstado, string> = {
-    PENDIENTE: 'Pendiente',
-    APROBADO: 'Aprobado',
-    RECHAZADO: 'Rechazado',
-    COMPLETADA: 'Completado',
-    ANULADA: 'Anulado',
-  }
-  return labels[estado]
-}
-
 function formatCurrency(value: number | string): string {
   return Number(value).toFixed(2)
 }
 
-onMounted(loadData)
+onMounted(loadProducts)
 </script>
 
 <template>
@@ -141,10 +102,10 @@ onMounted(loadData)
     <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
       <div>
         <h1 class="h2 fw-bold mb-1">Mis compras</h1>
-        <p class="text-muted mb-0">Crea pedidos y consulta su estado de aprobación.</p>
+        <p class="text-muted mb-0">Selecciona productos y envía un pedido.</p>
       </div>
-      <button class="btn btn-outline-primary" type="button" @click="loadData">
-        Actualizar historial
+      <button class="btn btn-outline-primary" type="button" @click="loadProducts">
+        Actualizar catálogo
       </button>
     </header>
 
@@ -205,37 +166,5 @@ onMounted(loadData)
       </div>
     </section>
 
-    <section>
-      <h2 class="h4 fw-bold mb-3">Historial de pedidos</h2>
-      <p v-if="!isLoading && pedidos.length === 0" class="text-muted">
-        Aún no tienes compras registradas.
-      </p>
-      <div v-else class="row g-3">
-        <div v-for="pedido in pedidos" :key="pedido.id" class="col-12">
-          <article class="card border-0 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex flex-wrap justify-content-between gap-3">
-                <div>
-                  <h3 class="h5 mb-1">{{ pedido.correlativo }}</h3>
-                  <small class="text-muted">{{ new Date(pedido.fecha).toLocaleString() }}</small>
-                </div>
-                <div class="text-md-end">
-                  <span class="badge" :class="statusBadgeClass(pedido.estado)">
-                    {{ statusLabel(pedido.estado) }}
-                  </span>
-                  <p class="fw-bold mb-0 mt-2">Bs. {{ formatCurrency(pedido.total) }}</p>
-                </div>
-              </div>
-              <ul class="small text-muted mt-3 mb-0">
-                <li v-for="(detalle, index) in pedido.detalles" :key="`${pedido.id}-${index}`">
-                  {{ detalle.producto?.nombre || 'Producto' }} × {{ detalle.cantidad }}
-                  — Bs. {{ formatCurrency(detalle.subtotal) }}
-                </li>
-              </ul>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
   </div>
 </template>

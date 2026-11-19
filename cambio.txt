@@ -245,3 +245,23 @@ Actualización: unificación de clientes y usuarios
   y 21 pruebas focalizadas de migración, usuarios/controlador/ventas pasaron. El login
   selecciona solo los campos del perfil necesarios y no incluye contacto ni
   clave.
+
+Actualización: legibilidad de perfil en el sidebar
+==================================================
+- El nombre del usuario ahora mantiene una sola línea con truncado por puntos
+  suspensivos cuando supera el ancho disponible, y el perfil reserva espacio
+  para el botón de cierre de sesión.
+- El rol se muestra con el mismo badge azul y texto blanco de alto contraste
+  para ADMINISTRADOR, VENDEDOR y CLIENTE.
+- Se ajustaron el tamaño del avatar, el espaciado y el padding de la tarjeta
+  para mejorar la alineación dentro del sidebar.
+
+Actualización: módulo independiente de historial de pedidos
+===========================================================
+- Se separó el historial de pedidos del módulo «Mis compras», que queda
+  enfocado en consultar el catálogo, calcular el total estimado y enviar
+  pedidos.
+- Se añadió la vista `/history` para que CLIENTE consulte estados, fechas,
+  totales y productos de sus pedidos, con opción para actualizar el historial.
+- La ruta requiere autenticación y rol CLIENTE; el sidebar muestra el enlace
+  «Historial de pedidos» debajo de «Mis compras» y destaca la opción activa.

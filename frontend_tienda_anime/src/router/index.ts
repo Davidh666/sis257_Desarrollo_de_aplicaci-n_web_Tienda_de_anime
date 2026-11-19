@@ -6,6 +6,7 @@ import ClientSalesView from '@/views/ClientSalesView.vue'
 import ClientHomeView from '@/views/ClientHomeView.vue'
 import AdminSalesView from '@/views/AdminSalesView.vue'
 import ClientPurchasesView from '@/views/ClientPurchasesView.vue'
+import ClientHistoryView from '@/views/ClientHistoryView.vue'
 
 function getRoleHome(rol?: string) {
   if (rol === 'VENDEDOR') return { name: 'client-sales' }
@@ -66,6 +67,12 @@ const router = createRouter({
       path: '/purchases',
       name: 'client-purchases',
       component: ClientPurchasesView,
+      meta: { requiresAuth: true, role: 'CLIENTE' }
+    },
+    {
+      path: '/history',
+      name: 'client-history',
+      component: ClientHistoryView,
       meta: { requiresAuth: true, role: 'CLIENTE' }
     }
   ]

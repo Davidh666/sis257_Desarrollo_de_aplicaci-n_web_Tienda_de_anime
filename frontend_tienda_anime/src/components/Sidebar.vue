@@ -79,22 +79,33 @@ const homeRoute = computed(() => {
               <span>Mis compras</span>
             </router-link>
           </li>
+          <li v-if="authStore.user?.rol === 'CLIENTE'" class="sidebar-menu-item">
+            <router-link to="/history" class="sidebar-menu-link" active-class="active">
+              <i class="bi bi-clock-history"></i>
+              <span>Historial de pedidos</span>
+            </router-link>
+          </li>
         </ul>
       </div>
     </div>
 
     <!-- Perfil del usuario autenticado + Botón de Cierre de Sesión -->
-    <div class="sidebar-profile d-flex align-items-center justify-content-between p-3">
-      <div class="d-flex align-items-center gap-2">
+    <div class="sidebar-profile d-flex align-items-center justify-content-between">
+      <div class="sidebar-profile-main">
         <img src="/assets/images/avatar.png" alt="Usuario" class="sidebar-profile-img" />
         <div class="sidebar-profile-info">
           <div class="sidebar-profile-name">
             {{ authStore.user?.nombreCompleto || authStore.user?.usuario || 'Usuario' }}
           </div>
-          <small class="text-muted">{{ authStore.user?.rol }}</small>
+          <span class="sidebar-profile-role">{{ authStore.user?.rol }}</span>
         </div>
       </div>
-      <button @click="authStore.logout" class="btn btn-sm btn-outline-danger" title="Cerrar sesión">
+      <button
+        @click="authStore.logout"
+        class="btn btn-sm btn-outline-danger"
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+      >
         <i class="bi bi-box-arrow-right"></i>
       </button>
     </div>
