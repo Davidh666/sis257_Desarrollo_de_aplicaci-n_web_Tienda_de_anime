@@ -83,7 +83,7 @@ const handleLogin = async () => {
               v-model="clave" 
               type="password" 
               class="form-control custom-input" 
-              placeholder="••••••••" 
+              placeholder="Introduce contraseña" 
               autocomplete="new-password"
               required 
             />
